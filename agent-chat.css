@@ -556,6 +556,14 @@
         height: 52px;
     }
 
+    /* The near-fullscreen chat window covers the toggle's spot; hide it while
+       open so it cannot intercept taps meant for the send button. */
+    .agent-chat-toggle.active {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
     .agent-chat-toggle svg {
         width: 24px;
         height: 24px;

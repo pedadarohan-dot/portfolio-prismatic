@@ -18,7 +18,7 @@ const CONFIG = window.CONFIG = {
     EMAILJS_TEMPLATE_ID: "template_b8b6acj",
 
     // Google Gemini API Configuration (for AI Chat Agent)
-    GEMINI_API_KEY: "AIzaSyChfUx7e82d7uCU3l-rkuB9VHsllNbqGL4",
+    GEMINI_API_KEY: "YOUR_GEMINI_API_KEY_HERE",
     GEMINI_MODEL: "gemini-2.5-flash",
 
     // Owner Email

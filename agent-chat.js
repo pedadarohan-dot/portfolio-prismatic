@@ -24,7 +24,7 @@
         // IMPORTANT: Replace with your actual Gemini API key
         // Get one free at https://aistudio.google.com/app/apikey
         // WARNING: Never commit real API keys to version control
-        apiKey: EXTERNAL_CONFIG.GEMINI_API_KEY || "AIzaSyChfUx7e82d7uCU3l-rkuB9VHsllNbqGL4",
+        apiKey: EXTERNAL_CONFIG.GEMINI_API_KEY || "",
         // Gemini API endpoint (key is passed as query parameter)
         apiEndpoint: "https://generativelanguage.googleapis.com/v1beta/models",
         model: EXTERNAL_CONFIG.GEMINI_MODEL || "gemini-2.5-flash",

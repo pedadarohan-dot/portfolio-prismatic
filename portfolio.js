@@ -7,7 +7,10 @@ const contactForm = document.getElementById("contact-form");
 const contactFormStatus = document.getElementById("contact-form-status");
 const contactSubmitBtn = document.getElementById("contact-submit-btn");
 const typingTextTarget = document.querySelector(".typing-text span");
+const scrollProgress = document.getElementById("scroll-progress");
+const certificatesVideo = document.querySelector(".certificates-video");
 const externalConfig = window.CONFIG || {};
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const EMAILJS_PUBLIC_KEY = externalConfig.EMAILJS_PUBLIC_KEY || "Y90PJL1LsJaaMprKb";
 const EMAILJS_SERVICE_ID = externalConfig.EMAILJS_SERVICE_ID || "service_4qxiy7t";
@@ -38,6 +41,12 @@ function initializeTypewriter() {
         "Full-Stack Developer",
         "GenAI Builder",
     ];
+
+    // Reduced motion: show a static role instead of animating.
+    if (prefersReducedMotion.matches) {
+        typingTextTarget.textContent = words[0];
+        return;
+    }
 
     const typingSpeed = 90;
     const deletingSpeed = 50;
@@ -77,38 +86,37 @@ function initializeTypewriter() {
     window.setTimeout(tick, 400);
 }
 
+/* One-time section reveals + staggered child reveals.
+   Reveal classes are only ever added by this script, so content stays
+   fully visible when JavaScript is unavailable. */
 function initializeSectionReveal() {
     const revealSections = Array.from(sections).filter((section) => section.id !== "home");
+    const revealItems = Array.from(document.querySelectorAll("[data-reveal]"));
 
-    if (!revealSections.length) return;
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (prefersReducedMotion.matches || !("IntersectionObserver" in window)) {
         revealSections.forEach((section) => section.classList.add("is-visible"));
         return;
     }
 
     revealSections.forEach((section) => section.classList.add("scroll-reveal"));
-
-    if (!("IntersectionObserver" in window)) {
-        revealSections.forEach((section) => section.classList.add("is-visible"));
-        return;
-    }
+    revealItems.forEach((item) => item.classList.add("reveal-pending"));
 
     const observer = new IntersectionObserver(
         (entries) => {
             entries.forEach((entry) => {
                 if (!entry.isIntersecting) return;
-                entry.target.classList.add("is-visible");
+                entry.target.classList.add("is-visible", "is-revealed");
                 observer.unobserve(entry.target);
             });
         },
         {
             threshold: 0.05,
-            rootMargin: "0px 0px 0px 0px",
+            rootMargin: "0px 0px -40px 0px",
         }
     );
 
     revealSections.forEach((section) => observer.observe(section));
+    revealItems.forEach((item) => observer.observe(item));
 }
 
 if (menuIcon && navbar) {
@@ -142,30 +150,82 @@ if (menuIcon && navbar) {
     });
 }
 
-window.onscroll = () => {
+/* Scroll handling: header state, active section, reading progress.
+   Section offsets are measured once (and on resize) so the scroll handler
+   never reads layout after writing styles — no forced synchronous layout. */
+let scrollTicking = false;
+let documentMaxScroll = 0;
+let sectionMetrics = [];
+
+function measureLayout() {
+    const doc = document.documentElement;
+    documentMaxScroll = Math.max(doc.scrollHeight - window.innerHeight, 0);
+    sectionMetrics = Array.from(sections).map((sec) => ({
+        id: sec.getAttribute("id"),
+        offset: sec.offsetTop,
+        height: sec.offsetHeight,
+    }));
+}
+
+function updateScrollState() {
     const top = window.scrollY;
 
-    sections.forEach((sec) => {
-        const offset = sec.offsetTop - 150;
-        const height = sec.offsetHeight;
-        const id = sec.getAttribute("id");
+    const progress = documentMaxScroll > 0 ? Math.min(top / documentMaxScroll, 1) : 0;
+    let activeId = null;
 
-        if (top >= offset && top < offset + height) {
-            navLinks.forEach((link) => {
-                link.classList.remove("active");
-            });
-            const activeLink = document.querySelector(`header nav a[href*="${id}"]`);
-            if (activeLink) {
-                activeLink.classList.add("active");
-            }
+    for (const metric of sectionMetrics) {
+        const start = metric.offset - 150;
+        if (top >= start && top < start + metric.height) {
+            activeId = metric.id;
+            break;
         }
-    });
-
-    if (header) {
-        header.classList.toggle("sticky", window.scrollY > 100);
     }
 
-};
+    // All reads done — now apply writes.
+    if (scrollProgress) {
+        scrollProgress.style.transform = `scaleX(${progress})`;
+    }
+
+    if (header) {
+        header.classList.toggle("sticky", top > 60);
+    }
+
+    if (activeId) {
+        navLinks.forEach((link) => {
+            link.classList.toggle("active", link.getAttribute("href") === `#${activeId}`);
+        });
+    }
+
+    scrollTicking = false;
+}
+
+measureLayout();
+
+let resizeTicking = false;
+window.addEventListener(
+    "resize",
+    () => {
+        if (resizeTicking) return;
+        resizeTicking = true;
+        window.requestAnimationFrame(() => {
+            measureLayout();
+            resizeTicking = false;
+        });
+    },
+    { passive: true }
+);
+
+window.addEventListener(
+    "scroll",
+    () => {
+        if (scrollTicking) return;
+        scrollTicking = true;
+        window.requestAnimationFrame(updateScrollState);
+    },
+    { passive: true }
+);
+
+updateScrollState();
 
 const yearSpan = document.getElementById("copyright-year");
 if (yearSpan) {
@@ -175,10 +235,37 @@ if (yearSpan) {
 initializeTypewriter();
 initializeSectionReveal();
 
+// Certificates video: only download/play it when it scrolls into view
+// (5.7 MB below the fold — keeps initial load light). Pauses when off-screen
+// and stays paused entirely under reduced motion.
+if (certificatesVideo) {
+    if (prefersReducedMotion.matches) {
+        certificatesVideo.pause();
+    } else if ("IntersectionObserver" in window) {
+        const videoObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        certificatesVideo.play().catch(() => { });
+                    } else {
+                        certificatesVideo.pause();
+                    }
+                });
+            },
+            { threshold: 0.25 }
+        );
+        videoObserver.observe(certificatesVideo);
+    } else {
+        certificatesVideo.play().catch(() => { });
+    }
+}
+
 if (contactForm) {
     if (window.emailjs && isEmailJsConfigured()) {
         window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
     }
+
+    let isSubmitting = false;
 
     contactForm.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -197,6 +284,9 @@ if (contactForm) {
             setContactStatus("Form is not configured yet. Add your EmailJS keys in config.js.", "error");
             return;
         }
+
+        if (isSubmitting) return;
+        isSubmitting = true;
 
         const formData = new FormData(contactForm);
         const senderEmail = formData.get("email");
@@ -226,6 +316,7 @@ if (contactForm) {
             console.error("Contact form email failed:", error);
             setContactStatus("Message failed to send. Please try again.", "error");
         } finally {
+            isSubmitting = false;
             if (contactSubmitBtn) {
                 contactSubmitBtn.disabled = false;
                 contactSubmitBtn.textContent = originalBtnText;

@@ -1,0 +1,215 @@
+{
+  "about": {
+    "name": "Rohan Pedada",
+    "title": "AI Generalist & Aspiring AI/ML Engineer",
+    "roles": [
+      "AI Generalist",
+      "Aspiring AI/ML Engineer",
+      "Python Developer",
+      "AI Chatbot Builder",
+      "Full-Stack Developer",
+      "Prompt Engineer",
+      "Generative AI Builder",
+      "Problem Solver"
+    ],
+    "bio": "Rohan Pedada is an AI Generalist and aspiring AI/ML Engineer with strong foundations in programming, data structures, web technologies, and AI-driven systems. He builds intelligent solutions that solve real-world problems using Python, modern web stacks, and practical AI workflows.",
+    "education": [
+      {
+        "degree": "B.Tech",
+        "field": "Electrical Engineering",
+        "years": "2023 - 2027",
+        "institution": "NIT Mizoram",
+        "cgpa": "9.23/10"
+      },
+      {
+        "degree": "Intermediate",
+        "field": "Andhra Pradesh State Board Of Intermediate Education",
+        "year": "2023",
+        "institution": "Narayana College, Srikakulam",
+        "cgpa": "10.00/10"
+      },
+      {
+        "degree": "High School",
+        "field": "Board of Secondary Education, Andhra Pradesh",
+        "institution": "Geetanjali School, Srikakulam",
+        "cgpa": "10.00/10"
+      },
+      {
+        "degree": "Internships",
+        "details": "Completed internships at RINL, Visakhapatnam Steel Plant and IIT Guwahati."
+      }
+    ],
+    "experience": [
+      {
+        "organization": "RINL, Visakhapatnam Steel Plant",
+        "type": "Industrial internship",
+        "period": "December 2024"
+      },
+      {
+        "organization": "IIT Guwahati",
+        "type": "Research and engineering internship",
+        "period": "May 2025"
+      },
+      {
+        "organization": "Satish Dhawan Space Centre (ISRO)",
+        "type": "Engineering internship",
+        "period": "June 2026",
+        "details": "Worked on servomotor commissioning using PLC and servodrive, and developed an automatic fluid mixer control system using PLC and SCADA."
+      }
+    ],
+    "social": {
+      "linkedin": "https://www.linkedin.com/in/rohan-pedada-b6b250380",
+      "github": "https://github.com/pedadarohan-dot",
+      "x": "https://x.com/rockstar_0729",
+      "instagram": "https://instagram.com/rohan.pedada"
+    }
+  },
+  "skills": [
+    {
+      "name": "Python",
+      "description": "Programming language listed in Rohan's resume."
+    },
+    {
+      "name": "C Programming",
+      "description": "Programming language listed in Rohan's resume."
+    },
+    {
+      "name": "HTML",
+      "description": "Web technology listed in Rohan's resume."
+    },
+    {
+      "name": "CSS",
+      "description": "Web technology listed in Rohan's resume."
+    },
+    {
+      "name": "JavaScript",
+      "description": "Adds interactivity and dynamic behavior across frontend applications."
+    },
+    {
+      "name": "AI & ChatGPT",
+      "description": "AI expertise and tools referenced in Rohan's resume."
+    },
+    {
+      "name": "Data Structures & Algorithms",
+      "description": "DSA is listed in Rohan's resume."
+    },
+    {
+      "name": "AI Tools",
+      "description": "AI tools and ChatGPT expertise listed in Rohan's resume."
+    },
+    {
+      "name": "Intelligent Systems & AI Solutions",
+      "description": "Building intelligent systems and AI solutions is a stated interest in Rohan's resume."
+    },
+    {
+      "name": "Machine Learning",
+      "description": "Rohan describes himself as an aspiring Machine Learning Engineer in his resume."
+    },
+    {
+      "name": "Automation Systems",
+      "description": "Automation systems are listed in Rohan's resume."
+    },
+    {
+      "name": "Application Engineering",
+      "description": "Application engineering is listed in Rohan's resume."
+    }
+  ],
+  "certifications": [
+    "Generative AI Mastermind — Outskill",
+    "AI for Engineers — Outskill",
+    "Python 101 for Data Science — IBM",
+    "AI Tools and ChatGPT Expert — Be10X"
+  ],
+  "services": [
+    {
+      "title": "AI Engineering",
+      "description": "Building intelligent systems powered by LLMs, RAG architectures, and machine learning models that deliver real business value."
+    },
+    {
+      "title": "Python Development",
+      "description": "From automation scripts to complex backends, creating clean and scalable Python applications with modern frameworks."
+    },
+    {
+      "title": "Full-Stack Web Development",
+      "description": "Modern, responsive web applications using React, Tailwind CSS, and robust backend architectures."
+    },
+    {
+      "title": "AI Chatbots & Automation",
+      "description": "Intelligent chatbots and workflow automations using ChatGPT, Gemini, and custom AI agents."
+    },
+    {
+      "title": "Generative AI Solutions",
+      "description": "Custom GenAI applications leveraging LLMs, prompt engineering, and AI APIs to generate useful outputs."
+    },
+    {
+      "title": "System-Level Programming",
+      "description": "High-performance C programming focused on optimization, memory efficiency, and algorithm design."
+    }
+  ],
+  "projects": [
+    {
+      "name": "CineWatch",
+      "summary": "A mood-aware movie recommender combining content similarity, collaborative filtering and emotion classification to make discovery feel more personal.",
+      "role": "Machine Learning Project",
+      "tech": "Python, TF-IDF, SVD, NLP, Transformers",
+      "liveDemo": "https://github.com/pedadarohan-dot/emotion-based-movie-recommendation-system"
+    },
+    {
+      "name": "Data Science AI Assistant",
+      "summary": "A multi-agent workflow that takes a natural-language analysis request through planning, code generation, execution and review.",
+      "role": "AI Project",
+      "tech": "LangGraph, Python, Gradio, AI agents",
+      "liveDemo": "https://huggingface.co/spaces/Rockstar729/data-science-ai-assistant"
+    },
+    {
+      "name": "Monocular Metric Metrology",
+      "summary": "A webcam-based measurement pipeline that estimates real-world dimensions using camera calibration, geometric estimation and pose tracking.",
+      "role": "Computer Vision Project",
+      "tech": "Python, OpenCV, Camera Calibration, Pose Tracking"
+    },
+    {
+      "name": "CampusWay",
+      "summary": "An indoor campus navigation experience that helps visitors find buildings and services through a clear map-based interface.",
+      "role": "Web Application Project",
+      "tech": "Web Development, Mapping, User Experience",
+      "liveDemo": "https://github.com/pedadarohan-dot"
+    },
+    {
+      "name": "Predictive Failure Maintenance",
+      "summary": "A support vector machine based predictive maintenance project for identifying patterns associated with equipment failure.",
+      "role": "Machine Learning Project",
+      "tech": "Python, SVM, Predictive Maintenance"
+    },
+    {
+      "name": "SREO",
+      "summary": "An intelligent energy optimization project focused on improving how energy use is monitored and managed.",
+      "role": "Engineering Project",
+      "tech": "Energy Systems, Optimization, Software"
+    },
+    {
+      "name": "RAG Chatbot",
+      "summary": "A retrieval-augmented chatbot workflow that grounds responses in connected information sources.",
+      "role": "AI Automation Project",
+      "tech": "RAG, n8n, Chatbot Automation"
+    },
+    {
+      "name": "Code Converter Agent",
+      "summary": "An AI agent that translates code between programming languages while aiming to preserve the original logic and intent.",
+      "role": "AI Project",
+      "tech": "Python, LLMs, Code Translation",
+      "liveDemo": "https://codeconverter007.netlify.app/"
+    },
+    {
+      "name": "File Converter Agent",
+      "summary": "A file conversion web app that brings common document and media conversion workflows together.",
+      "role": "Web Application Project",
+      "tech": "Python, File Conversion, Media Tools",
+      "liveDemo": "https://fileconverter007.netlify.app/"
+    }
+  ],
+  "contact": {
+    "linkedin": "https://www.linkedin.com/in/rohan-pedada-b6b250380",
+    "github": "https://github.com/pedadarohan-dot",
+    "resumeUrl": "Rohan Pedada Resume.pdf"
+  }
+}

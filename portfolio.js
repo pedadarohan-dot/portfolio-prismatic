@@ -165,6 +165,7 @@ function measureLayout() {
         offset: sec.offsetTop,
         height: sec.offsetHeight,
     }));
+    buildStackGeometry();
 }
 
 function updateScrollState() {
@@ -187,16 +188,215 @@ function updateScrollState() {
     }
 
     if (header) {
-        header.classList.toggle("sticky", top > 60);
+        const stickyNow = top > 60;
+        if (header.classList.contains("sticky") !== stickyNow) {
+            header.classList.toggle("sticky", stickyNow);
+            // Header padding changes with .sticky - re-measure the pill.
+            placePill(pillAnchorLink);
+        }
     }
 
     if (activeId) {
+        let activeNavLink = null;
         navLinks.forEach((link) => {
-            link.classList.toggle("active", link.getAttribute("href") === `#${activeId}`);
+            const isActive = link.getAttribute("href") === `#${activeId}`;
+            link.classList.toggle("active", isActive);
+            if (isActive) activeNavLink = link;
         });
+        pinPill(activeNavLink);
     }
 
+    applyStackFrames();
+
     scrollTicking = false;
+}
+
+/* ===== Motion upgrade: stacked-card scroll + sliding glass nav pill =====
+   Progressive enhancement layered on the existing rAF scroll handler.
+   Without JavaScript, under reduced motion, or below 996px the zones keep
+   their normal grid/flow layout and the nav keeps plain links. When active,
+   each zone becomes a single-column stack whose per-card transform is a
+   pure function of scrollY - scrolling back reverses exactly, nothing is
+   hijacked, and geometry is cached so the scroll handler never reads
+   layout mid-frame. */
+
+const stackZones = Array.from(document.querySelectorAll(".stack-zone"));
+let stackFrames = [];
+const STACK_PIN_OFFSET = 96; // px below the viewport top where cards pin
+const STACK_HOLD_VH = 0.5; // extra scroll the last card holds before release
+
+function stackChildren(zone) {
+    return Array.from(zone.children).filter((child) =>
+        child.matches(".project-card, .bar, .skills-category")
+    );
+}
+
+function setupStacks() {
+    const stacked = window.innerWidth > 995 && !prefersReducedMotion.matches;
+
+    stackZones.forEach((zone) => {
+        const children = stackChildren(zone);
+        if (!children.length) return;
+
+        if (stacked) {
+            zone.classList.add("stack-active");
+            // Spacing between cards sets the pin cadence: each card pins
+            // one "step" (data-stack-step x viewport height) after the last.
+            const stepTarget = (parseFloat(zone.dataset.stackStep) || 0.6) * window.innerHeight;
+            const minGap = window.innerHeight * 0.14;
+            children.forEach((child, index) => {
+                // The stack owns visibility while active; the generic
+                // reveal-pending state would fight the scroll transforms.
+                child.classList.remove("reveal-pending");
+                child.classList.add("is-revealed");
+                child.style.zIndex = String(index + 1);
+                child.style.marginTop =
+                    index === 0
+                        ? "0px"
+                        : `${Math.max(stepTarget - child.offsetHeight, minGap).toFixed(0)}px`;
+            });
+        } else {
+            zone.classList.remove("stack-active");
+            children.forEach((child) => {
+                child.style.marginTop = "";
+                child.style.transform = "";
+                child.style.zIndex = "";
+                if (!child.classList.contains("is-revealed")) {
+                    child.classList.add("reveal-pending");
+                }
+            });
+        }
+    });
+
+    buildStackGeometry();
+    applyStackFrames();
+}
+
+function buildStackGeometry() {
+    stackFrames = [];
+    stackZones.forEach((zone) => {
+        if (!zone.classList.contains("stack-active")) return;
+        const children = stackChildren(zone);
+        if (!children.length) return;
+        // Layout position via the offsetTop chain, NOT getBoundingClientRect:
+        // sections animate the CSS `translate` property during their reveal,
+        // which pollutes rect-based measurement until the transition settles.
+        let zoneTop = 0;
+        for (let el = zone; el; el = el.offsetParent) zoneTop += el.offsetTop;
+        const scaleStep = parseFloat(zone.dataset.stackScale) || 0.015;
+        const dropPx = (parseFloat(zone.dataset.stackDrop) || 1.6) * 10;
+        // child.offsetTop includes the margins setupStacks() applied.
+        const starts = children.map((child) => zoneTop + child.offsetTop - STACK_PIN_OFFSET);
+        stackFrames.push({
+            children,
+            starts,
+            scaleStep,
+            dropPx,
+            release: starts[starts.length - 1] + STACK_HOLD_VH * window.innerHeight,
+        });
+    });
+}
+
+function applyStackFrames() {
+    if (!stackFrames.length) return;
+    const y = window.scrollY;
+
+    stackFrames.forEach((frame) => {
+        let activeIndex = -1;
+        for (let i = 0; i < frame.starts.length; i += 1) {
+            if (y >= frame.starts[i]) activeIndex = i;
+        }
+
+        frame.children.forEach((child, i) => {
+            // pinned: 0 before the pin point, then holds the card at the pin
+            // line until the release point (the whole stack then scrolls away
+            // as one unit). enterLag: incoming cards trail slightly below
+            // their natural rise, easing to 0 exactly at the pin point.
+            const pinned = Math.min(
+                Math.max(y - frame.starts[i], 0),
+                Math.max(frame.release - frame.starts[i], 0)
+            );
+            const incoming = frame.starts[i] - y;
+            const enterLag = incoming > 0 ? Math.min(80, incoming * 0.09) : 0;
+            // depth: how many cards are pinned on top of this one - earlier
+            // cards recede with a small scale-down and downward offset.
+            const depth = Math.max(activeIndex - i, 0);
+            const scale = Math.max(0.84, 1 - depth * frame.scaleStep);
+            const offset = pinned + enterLag + depth * frame.dropPx;
+            child.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
+        });
+    });
+}
+
+/* Content above the stacks (lazy images finishing, font swap) can shift
+   the stacks' page position after the initial measurement. Watching the
+   body size rebuilds the cached pin geometry whenever that happens.
+   Safe: rebuilds are read-only, transforms stay a pure function of
+   scrollY, and the queued rAF prevents observer thrash. */
+if ("ResizeObserver" in window) {
+    let stackRebuildQueued = false;
+    const bodySizeObserver = new ResizeObserver(() => {
+        if (stackRebuildQueued) return;
+        stackRebuildQueued = true;
+        window.requestAnimationFrame(() => {
+            stackRebuildQueued = false;
+            buildStackGeometry();
+            applyStackFrames();
+        });
+    });
+    bodySizeObserver.observe(document.body);
+}
+
+/* --- Sliding glass nav pill (adapted from the iOS Camera mode selector):
+   ONE shared element slides + resizes between nav links. The Resume CTA is
+   excluded by design; hover/focus preview the pill but never change the
+   selected section. Geometry is re-placed on resize, font load and the
+   header's sticky padding shift. */
+const navPill = document.querySelector(".nav-pill");
+const pillLinks = Array.from(navLinks).filter(
+    (link) => link.getAttribute("href").indexOf("#") === 0 && !link.classList.contains("nav-resume-btn")
+);
+let pillAnchorLink = null;
+
+function placePill(link) {
+    if (!navPill || !header || !link) return;
+    if (window.innerWidth <= 995) return;
+    const linkRect = link.getBoundingClientRect();
+    const headerRect = header.getBoundingClientRect();
+    navPill.style.width = `${linkRect.width.toFixed(1)}px`;
+    navPill.style.height = `${linkRect.height.toFixed(1)}px`;
+    navPill.style.transform = `translate3d(${(linkRect.left - headerRect.left).toFixed(1)}px, ${(linkRect.top - headerRect.top).toFixed(1)}px, 0)`;
+}
+
+function pinPill(link) {
+    if (!link || link === pillAnchorLink || pillLinks.indexOf(link) === -1) return;
+    pillAnchorLink = link;
+    placePill(link);
+}
+
+if (navPill && navbar) {
+    navbar.addEventListener("pointerover", (event) => {
+        const link = event.target.closest("a");
+        if (!link) return;
+        placePill(link.classList.contains("nav-resume-btn") ? pillAnchorLink : link);
+    });
+    navbar.addEventListener("pointerleave", () => placePill(pillAnchorLink));
+    navbar.addEventListener("focusin", (event) => {
+        const link = event.target.closest("a");
+        if (link && !link.classList.contains("nav-resume-btn")) placePill(link);
+    });
+    navbar.addEventListener("focusout", () => placePill(pillAnchorLink));
+    navbar.classList.add("nav-pill-ready");
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => placePill(pillAnchorLink));
+    }
+    // Webfont swap can finish AFTER both fonts.ready and load (fallback
+    // metrics shift the links horizontally) - re-place on the Font Loading
+    // API's loadingdone event so the pill always matches final metrics.
+    if (document.fonts && document.fonts.addEventListener) {
+        document.fonts.addEventListener("loadingdone", () => placePill(pillAnchorLink));
+    }
+    window.addEventListener("load", () => placePill(pillAnchorLink), { once: true });
 }
 
 measureLayout();
@@ -208,7 +408,12 @@ window.addEventListener(
         if (resizeTicking) return;
         resizeTicking = true;
         window.requestAnimationFrame(() => {
+            // Stacks re-apply spacing first (it changes layout), then the
+            // metric caches, then the pill and scroll-derived state.
+            setupStacks();
             measureLayout();
+            placePill(pillAnchorLink);
+            updateScrollState();
             resizeTicking = false;
         });
     },
@@ -234,6 +439,13 @@ if (yearSpan) {
 
 initializeTypewriter();
 initializeSectionReveal();
+
+/* Motion-upgrade init runs last so the reveal system has already marked
+   its items; stacks then take over their visibility and spacing, and the
+   layout is re-measured because stack spacing changes document height. */
+setupStacks();
+measureLayout();
+updateScrollState();
 
 // Certificates video: only download/play it when it scrolls into view
 // (5.7 MB below the fold — keeps initial load light). Pauses when off-screen

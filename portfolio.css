@@ -2222,3 +2222,117 @@ main section.scroll-reveal.is-visible,
         backdrop-filter: none;
     }
 }
+
+
+/* ================================================================
+   §19 Motion upgrade - stacked-card scroll (Projects + Skills)
+   Adapted from the stacking references in the motion brief: cards rise
+   naturally from below, pin just under the header, and the next card
+   stacks over them while earlier cards recede (small scale-down +
+   downward offset). Driven entirely by per-card transforms written from
+   the rAF scroll handler in portfolio.js - no scroll hijacking, no extra
+   library. Progressive enhancement: without JavaScript, under reduced
+   motion, or below 996px the zones keep the normal grid/flow layout. */
+.stack-zone {
+    position: relative;
+}
+
+.stack-zone.stack-active {
+    display: block;
+}
+
+.stack-zone.stack-active > * {
+    transform-origin: 50% 0%;
+    will-change: transform;
+    /* The scroll handler writes transform every frame; a CSS transition
+       on it would smear the motion. Hover/active colour transitions are
+       intentionally traded away inside active stacks. */
+    transition-property: none;
+    /* Slightly deeper shadow while stacked so the layered cards read as
+       a physical deck against the glass behind them. */
+    box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 7%),
+        0 24px 60px rgb(0 0 0 / 40%);
+}
+
+/* Language bars lose their narrow-tile layout when stacked (they become
+   full-width rows): content switches to a left-aligned horizontal row,
+   and the frosted backdrop keeps overlapped labels from ghosting
+   through while cards slide over each other. */
+.stack-zone.stack-active > .bar {
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    backdrop-filter: blur(12px) saturate(140%);
+}
+
+.stack-zone.stack-active > .bar .info {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.6rem;
+}
+
+.stack-zone.stack-active > .bar .info span {
+    text-align: left;
+    font-size: 1.5rem;
+}
+
+/* ================================================================
+   §20 Motion upgrade - sliding glass nav pill
+   Adapted from the iPhone Camera mode selector: ONE shared pill element
+   slides and resizes between the nav links. The Resume CTA is excluded
+   on purpose (it is an action, not a section). Hover/focus preview the
+   pill; only the scroll-driven active section changes the selection. */
+.nav-pill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6rem;
+    height: 3.6rem;
+    border-radius: var(--radius-pill);
+    background:
+        linear-gradient(160deg, rgb(255 255 255 / 16%), rgb(64 224 208 / 7%)),
+        rgb(255 255 255 / 4%);
+    border: 1px solid rgb(255 255 255 / 24%);
+    box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 32%),
+        0 6px 18px rgb(0 0 0 / 24%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        transform 0.45s var(--ease-out),
+        width 0.45s var(--ease-out),
+        height 0.45s var(--ease-out),
+        opacity 0.3s ease;
+    will-change: transform, width;
+}
+
+/* Hidden until the script has placed it once (fonts may still be
+   loading), so it never flashes at the top-left corner. */
+.navbar.nav-pill-ready .nav-pill {
+    opacity: 1;
+}
+
+/* Desktop: the pill IS the active-section indicator, so retire the old
+   tint + glow (they would double up behind it). Colour accent stays. */
+@media (min-width: 996px) {
+    .navbar a.active {
+        background: transparent;
+        box-shadow: none;
+    }
+}
+
+/* Below 996px the nav collapses into the dropdown menu, where a sliding
+   pill makes no sense - the flat tint highlight stays there. */
+@media (max-width: 995px) {
+    .nav-pill {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-pill {
+        transition: none;
+    }
+}

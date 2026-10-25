@@ -52,6 +52,12 @@
     --transition-slow: 600ms;
     --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
     --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    /* Apple-grade glide for the nav pill: fast launch, long soft landing
+       with zero positional overshoot (ease-out-quint). The springiness
+       lives in the jelly squash keyframes, not in the travel curve - an
+       overshooting pill reads bouncy/dated, a decelerating one reads
+       expensive. */
+    --ease-liquid: cubic-bezier(0.22, 1, 0.36, 1);
 
     /* Type */
     --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
@@ -2335,11 +2341,36 @@ main section.scroll-reveal.is-visible,
     opacity: 0;
     pointer-events: none;
     transition:
-        transform 0.45s var(--ease-out),
-        width 0.45s var(--ease-out),
-        height 0.45s var(--ease-out),
+        transform 0.5s var(--ease-liquid),
+        width 0.5s var(--ease-liquid),
+        height 0.5s var(--ease-liquid),
         opacity 0.3s ease;
     will-change: transform, width;
+}
+
+/* Liquid jelly: while the pill travels it stretches toward its target
+   (more with distance), then counter-bounces and settles - a blob of
+   glass being flicked, not a box being moved. The `scale` property
+   composes with the `transform` translate that positions the pill, so
+   the slide and the squash never fight over the same property.
+   Amounts come from JS custom props (--pill-squash-x/-y) and the
+   stretch origin from the shared transform-origin. */
+.nav-pill.is-shifting {
+    animation: pill-liquid 0.48s var(--ease-liquid);
+}
+
+@keyframes pill-liquid {
+    0% {
+        scale: var(--pill-squash-x, 1.14) var(--pill-squash-y, 0.93);
+    }
+
+    55% {
+        scale: 0.985 1.012;
+    }
+
+    100% {
+        scale: 1 1;
+    }
 }
 
 /* Hidden until the script has placed it once (fonts may still be
@@ -2366,7 +2397,10 @@ main section.scroll-reveal.is-visible,
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .nav-pill {
+    .nav-pill,
+    .nav-pill.is-shifting {
         transition: none;
+        animation: none;
+        scale: 1 1;
     }
 }

@@ -466,34 +466,60 @@ const pillLinks = Array.from(navLinks).filter(
 );
 let pillAnchorLink = null;
 
-function placePill(link) {
+function placePill(link, { liquid = false } = {}) {
     if (!navPill || !header || !link) return;
     if (window.innerWidth <= 995) return;
     const linkRect = link.getBoundingClientRect();
     const headerRect = header.getBoundingClientRect();
+    const nextX = linkRect.left - headerRect.left;
+
+    /* Liquid jelly on hover/focus: measure the hop from where the pill
+       currently sits, stretch it toward the target (further = more squash),
+       origin on the trailing edge so it lags like a heavy blob, then let the
+       keyframe animation counter-bounce and settle. Clamped so a long sweep
+       across the nav stays tasteful, and skipped under reduced motion. */
+    if (liquid && !prefersReducedMotion.matches) {
+        const currentX =
+            parseFloat((navPill.style.transform.match(/translate3d\(\s*([-\d.]+)px/) || [0, 0])[1]) || 0;
+        const currentW = parseFloat(navPill.style.width) || linkRect.width;
+        const travel = nextX + linkRect.width / 2 - (currentX + currentW / 2);
+        if (Math.abs(travel) > 4) {
+            const t = Math.min(Math.abs(travel) / 320, 1);
+            const stretchX = (1.06 + 0.16 * t).toFixed(3);
+            const squashY = (1 - 0.1 * t).toFixed(3);
+            navPill.style.setProperty("--pill-squash-x", stretchX);
+            navPill.style.setProperty("--pill-squash-y", squashY);
+            // Leading edge pulls forward: origin sits on the side it leaves.
+            navPill.style.transformOrigin = travel > 0 ? "left center" : "right center";
+            navPill.classList.remove("is-shifting");
+            void navPill.offsetWidth; // restart the keyframes
+            navPill.classList.add("is-shifting");
+        }
+    }
+
     navPill.style.width = `${linkRect.width.toFixed(1)}px`;
     navPill.style.height = `${linkRect.height.toFixed(1)}px`;
-    navPill.style.transform = `translate3d(${(linkRect.left - headerRect.left).toFixed(1)}px, ${(linkRect.top - headerRect.top).toFixed(1)}px, 0)`;
+    navPill.style.transform = `translate3d(${nextX.toFixed(1)}px, ${(linkRect.top - headerRect.top).toFixed(1)}px, 0)`;
 }
 
 function pinPill(link) {
     if (!link || link === pillAnchorLink || pillLinks.indexOf(link) === -1) return;
     pillAnchorLink = link;
-    placePill(link);
+    placePill(link, { liquid: true });
 }
 
 if (navPill && navbar) {
     navbar.addEventListener("pointerover", (event) => {
         const link = event.target.closest("a");
         if (!link) return;
-        placePill(link.classList.contains("nav-resume-btn") ? pillAnchorLink : link);
+        placePill(link.classList.contains("nav-resume-btn") ? pillAnchorLink : link, { liquid: true });
     });
-    navbar.addEventListener("pointerleave", () => placePill(pillAnchorLink));
+    navbar.addEventListener("pointerleave", () => placePill(pillAnchorLink, { liquid: true }));
     navbar.addEventListener("focusin", (event) => {
         const link = event.target.closest("a");
-        if (link && !link.classList.contains("nav-resume-btn")) placePill(link);
+        if (link && !link.classList.contains("nav-resume-btn")) placePill(link, { liquid: true });
     });
-    navbar.addEventListener("focusout", () => placePill(pillAnchorLink));
+    navbar.addEventListener("focusout", () => placePill(pillAnchorLink, { liquid: true }));
     navbar.classList.add("nav-pill-ready");
     if (document.fonts && document.fonts.ready) {
         document.fonts.ready.then(() => placePill(pillAnchorLink));

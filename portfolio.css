@@ -2225,14 +2225,21 @@ main section.scroll-reveal.is-visible,
 
 
 /* ================================================================
-   §19 Motion upgrade - stacked-card scroll (Projects + Skills)
-   Adapted from the stacking references in the motion brief: cards rise
-   naturally from below, pin just under the header, and the next card
-   stacks over them while earlier cards recede (small scale-down +
-   downward offset). Driven entirely by per-card transforms written from
-   the rAF scroll handler in portfolio.js - no scroll hijacking, no extra
-   library. Progressive enhancement: without JavaScript, under reduced
-   motion, or below 996px the zones keep the normal grid/flow layout. */
+   §19 Motion upgrade - deck-reveal stacked cards (Projects, Skills,
+   Core Expertise)
+   Adapted from the correction brief: every zone begins as ONE visible
+   deck - all cards overlapped in a shared stacking area, front card on
+   top, the cards behind fanning just below it. Scrolling deals the deck
+  : the front card travels up and out through the top of the stage,
+   revealing the card that was already underneath it, which rises to the
+   front. Nothing flies up from below and nothing assembles - the deck
+   exists before the stage pins. Progress is a pure function of scrollY
+   written from the rAF scroll handler (transforms only, no scroll
+   hijacking, no extra library), so scrolling back re-deals the deck in
+   reverse exactly.
+   Progressive enhancement: without JavaScript, under reduced motion, or
+   on viewports shorter than 520px the zones keep their normal grid/flow
+   layout - the .stack-stage wrapper only ever exists when JS builds it. */
 .stack-zone {
     position: relative;
 }
@@ -2241,13 +2248,34 @@ main section.scroll-reveal.is-visible,
     display: block;
 }
 
-.stack-zone.stack-active > * {
+/* The shared stacking area: the stage sits in flow at the top of its zone
+   (the zone's explicit height carries the scroll runway below it) and JS
+   pins it just below the header with a transform. Keeping it in flow -
+   not absolutely positioned - means the section reveal's animated
+   `translate` property can never re-anchor it to the wrong box.
+   overflow: hidden is the table edge - dealt cards slide up and out
+   through the top of the stage instead of crossing the navbar. */
+.stack-stage {
+    position: relative;
+    overflow: hidden;
+    /* Clicks fall through the stage; only the front card takes input. */
+    pointer-events: none;
+    will-change: transform;
+}
+
+.stack-zone.stack-active .stack-stage > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     transform-origin: 50% 0%;
     will-change: transform;
     /* The scroll handler writes transform every frame; a CSS transition
        on it would smear the motion. Hover/active colour transitions are
-       intentionally traded away inside active stacks. */
+       intentionally traded away inside active decks. */
     transition-property: none;
+    /* Cards underneath must not block interaction with the front card. */
+    pointer-events: none;
     /* Slightly deeper shadow while stacked so the layered cards read as
        a physical deck against the glass behind them. */
     box-shadow:
@@ -2255,23 +2283,29 @@ main section.scroll-reveal.is-visible,
         0 24px 60px rgb(0 0 0 / 40%);
 }
 
-/* Language bars lose their narrow-tile layout when stacked (they become
+/* The front/focused card is the one being dealt or read: it alone keeps
+   its pointer target. JS toggles .is-front as the deal progresses. */
+.stack-zone.stack-active .stack-stage > .is-front {
+    pointer-events: auto;
+}
+
+/* Language bars lose their narrow-tile layout when decked (they become
    full-width rows): content switches to a left-aligned horizontal row,
    and the frosted backdrop keeps overlapped labels from ghosting
    through while cards slide over each other. */
-.stack-zone.stack-active > .bar {
+.stack-zone.stack-active .stack-stage > .bar {
     -webkit-backdrop-filter: blur(12px) saturate(140%);
     backdrop-filter: blur(12px) saturate(140%);
 }
 
-.stack-zone.stack-active > .bar .info {
+.stack-zone.stack-active .stack-stage > .bar .info {
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     gap: 1.6rem;
 }
 
-.stack-zone.stack-active > .bar .info span {
+.stack-zone.stack-active .stack-stage > .bar .info span {
     text-align: left;
     font-size: 1.5rem;
 }

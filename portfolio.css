@@ -52,12 +52,15 @@
     --transition-slow: 600ms;
     --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
     --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
-    /* Apple-grade glide for the nav pill: fast launch, long soft landing
-       with zero positional overshoot (ease-out-quint). The springiness
-       lives in the jelly squash keyframes, not in the travel curve - an
-       overshooting pill reads bouncy/dated, a decelerating one reads
-       expensive. */
-    --ease-liquid: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Apple-grade glide for the nav pill: a measured launch, then a long
+       soft landing with zero positional overshoot. Slower and heavier than
+       a UI snap on purpose - the bubble should look like it has mass.
+       The springiness lives in the jelly squash keyframes, not in the
+       travel curve - an overshooting pill reads bouncy/dated, a
+       decelerating one reads expensive. */
+    --ease-liquid: cubic-bezier(0.32, 0.72, 0, 1);
+    --pill-travel-time: 0.78s;
+    --pill-jelly-time: 0.72s;
 
     /* Type */
     --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
@@ -2229,106 +2232,6 @@ main section.scroll-reveal.is-visible,
     }
 }
 
-
-/* ================================================================
-   §19 Motion upgrade - deck-reveal stacked cards (Projects, Skills,
-   Core Expertise)
-   Adapted from the correction brief: every zone begins as ONE visible
-   deck - all cards overlapped in a shared stacking area, front card on
-   top, the cards behind fanning just below it. Scrolling deals the deck
-  : the front card travels up and out through the top of the stage,
-   revealing the card that was already underneath it, which rises to the
-   front. Nothing flies up from below and nothing assembles - the deck
-   exists before the stage pins. Progress is a pure function of scrollY
-   written from the rAF scroll handler (transforms only, no scroll
-   hijacking, no extra library), so scrolling back re-deals the deck in
-   reverse exactly.
-   Progressive enhancement: without JavaScript, under reduced motion, or
-   on viewports shorter than 520px the zones keep their normal grid/flow
-   layout - the .stack-stage wrapper only ever exists when JS builds it. */
-.stack-zone {
-    position: relative;
-}
-
-.stack-zone.stack-active {
-    display: block;
-}
-
-/* The shared stacking area: the stage sits in flow at the top of its zone
-   (the zone's explicit height carries the scroll runway below it) and JS
-   pins it just below the header with a transform. Keeping it in flow -
-   not absolutely positioned - means the section reveal's animated
-   `translate` property can never re-anchor it to the wrong box.
-   overflow: hidden is the table edge - dealt cards slide up and out
-   through the top of the stage instead of crossing the navbar. */
-.stack-stage {
-    position: relative;
-    overflow: hidden;
-    /* Clicks fall through the stage; only the front card takes input. */
-    pointer-events: none;
-    will-change: transform;
-}
-
-.stack-zone.stack-active .stack-stage > * {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    transform-origin: 50% 0%;
-    /* Every card is transformed every scroll frame and carries a 60px
-       shadow, so keeping them promoted is the cheaper trade: re-rasterising
-       nine shadowed cards inside the parent layer stalls the compositor. */
-    will-change: transform;
-    /* Only the front card, and the two fanned directly behind it, are far
-       enough from being covered to show their frosted backdrop. Blurring all
-       of them meant one full-width blur pass per card per frame; three is
-       the whole visible benefit of nine. */
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    /* The scroll handler writes transform every frame; a CSS transition
-       on it would smear the motion. Hover/active colour transitions are
-       intentionally traded away inside active decks. */
-    transition-property: none;
-    /* Cards underneath must not block interaction with the front card. */
-    pointer-events: none;
-    /* Slightly deeper shadow while stacked so the layered cards read as
-       a physical deck against the glass behind them. */
-    box-shadow:
-        inset 0 1px 0 rgb(255 255 255 / 7%),
-        0 24px 60px rgb(0 0 0 / 40%);
-}
-
-/* The frosted band that stops overlapped labels ghosting through while one
-   card slides over the next. Two spare cards keep it applied ahead of time so
-   a card never has to build a blur layer at the moment it is dealt. */
-.stack-zone.stack-active .stack-stage > .is-front,
-.stack-zone.stack-active .stack-stage > .is-front + *,
-.stack-zone.stack-active .stack-stage > .is-front + * + * {
-    -webkit-backdrop-filter: blur(12px) saturate(140%);
-    backdrop-filter: blur(12px) saturate(140%);
-}
-
-/* The front/focused card is the one being dealt or read: it alone keeps
-   its pointer target. JS toggles .is-front as the deal progresses. */
-.stack-zone.stack-active .stack-stage > .is-front {
-    pointer-events: auto;
-}
-
-/* Language bars lose their narrow-tile layout when decked (they become
-   full-width rows): content switches to a left-aligned horizontal row.
-   Their frosted backdrop comes from the front-card rule above. */
-.stack-zone.stack-active .stack-stage > .bar .info {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 1.6rem;
-}
-
-.stack-zone.stack-active .stack-stage > .bar .info span {
-    text-align: left;
-    font-size: 1.5rem;
-}
-
 /* ================================================================
    §20 Motion upgrade - sliding glass nav pill
    Adapted from the iPhone Camera mode selector: ONE shared pill element
@@ -2354,10 +2257,10 @@ main section.scroll-reveal.is-visible,
     opacity: 0;
     pointer-events: none;
     transition:
-        transform 0.5s var(--ease-liquid),
-        width 0.5s var(--ease-liquid),
-        height 0.5s var(--ease-liquid),
-        opacity 0.3s ease;
+        transform var(--pill-travel-time) var(--ease-liquid),
+        width var(--pill-travel-time) var(--ease-liquid),
+        height var(--pill-travel-time) var(--ease-liquid),
+        opacity 0.4s ease;
     will-change: transform, width;
 }
 
@@ -2369,16 +2272,16 @@ main section.scroll-reveal.is-visible,
    Amounts come from JS custom props (--pill-squash-x/-y) and the
    stretch origin from the shared transform-origin. */
 .nav-pill.is-shifting {
-    animation: pill-liquid 0.48s var(--ease-liquid);
+    animation: pill-liquid var(--pill-jelly-time) var(--ease-liquid);
 }
 
 @keyframes pill-liquid {
     0% {
-        scale: var(--pill-squash-x, 1.14) var(--pill-squash-y, 0.93);
+        scale: var(--pill-squash-x, 1.12) var(--pill-squash-y, 0.96);
     }
 
-    55% {
-        scale: 0.985 1.012;
+    62% {
+        scale: 0.994 1.007;
     }
 
     100% {

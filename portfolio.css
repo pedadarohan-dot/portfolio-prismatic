@@ -2275,7 +2275,16 @@ main section.scroll-reveal.is-visible,
     left: 0;
     right: 0;
     transform-origin: 50% 0%;
+    /* Every card is transformed every scroll frame and carries a 60px
+       shadow, so keeping them promoted is the cheaper trade: re-rasterising
+       nine shadowed cards inside the parent layer stalls the compositor. */
     will-change: transform;
+    /* Only the front card, and the two fanned directly behind it, are far
+       enough from being covered to show their frosted backdrop. Blurring all
+       of them meant one full-width blur pass per card per frame; three is
+       the whole visible benefit of nine. */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     /* The scroll handler writes transform every frame; a CSS transition
        on it would smear the motion. Hover/active colour transitions are
        intentionally traded away inside active decks. */
@@ -2289,6 +2298,16 @@ main section.scroll-reveal.is-visible,
         0 24px 60px rgb(0 0 0 / 40%);
 }
 
+/* The frosted band that stops overlapped labels ghosting through while one
+   card slides over the next. Two spare cards keep it applied ahead of time so
+   a card never has to build a blur layer at the moment it is dealt. */
+.stack-zone.stack-active .stack-stage > .is-front,
+.stack-zone.stack-active .stack-stage > .is-front + *,
+.stack-zone.stack-active .stack-stage > .is-front + * + * {
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    backdrop-filter: blur(12px) saturate(140%);
+}
+
 /* The front/focused card is the one being dealt or read: it alone keeps
    its pointer target. JS toggles .is-front as the deal progresses. */
 .stack-zone.stack-active .stack-stage > .is-front {
@@ -2296,14 +2315,8 @@ main section.scroll-reveal.is-visible,
 }
 
 /* Language bars lose their narrow-tile layout when decked (they become
-   full-width rows): content switches to a left-aligned horizontal row,
-   and the frosted backdrop keeps overlapped labels from ghosting
-   through while cards slide over each other. */
-.stack-zone.stack-active .stack-stage > .bar {
-    -webkit-backdrop-filter: blur(12px) saturate(140%);
-    backdrop-filter: blur(12px) saturate(140%);
-}
-
+   full-width rows): content switches to a left-aligned horizontal row.
+   Their frosted backdrop comes from the front-card rule above. */
 .stack-zone.stack-active .stack-stage > .bar .info {
     flex-direction: row;
     align-items: center;

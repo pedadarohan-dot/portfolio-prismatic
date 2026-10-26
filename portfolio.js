@@ -154,6 +154,7 @@ if (menuIcon && navbar) {
    Section offsets are measured once (and on resize) so the scroll handler
    never reads layout after writing styles — no forced synchronous layout. */
 let scrollTicking = false;
+let currentSectionId = null;
 let documentMaxScroll = 0;
 let sectionMetrics = [];
 
@@ -184,7 +185,11 @@ function updateScrollState() {
 
     // All reads done — now apply writes.
     if (scrollProgress) {
-        scrollProgress.style.transform = `scaleX(${progress})`;
+        const bar = `scaleX(${progress.toFixed(4)})`;
+        if (scrollProgress.__stackTransform !== bar) {
+            scrollProgress.__stackTransform = bar;
+            scrollProgress.style.transform = bar;
+        }
     }
 
     if (header) {
@@ -196,7 +201,12 @@ function updateScrollState() {
         }
     }
 
-    if (activeId) {
+    /* Only touch the nav when the active section actually changes. Writing
+       classList.toggle on every link each frame is an attribute mutation
+       per link per frame, and that alone keeps style recalc alive for the
+       whole scroll. */
+    if (activeId && activeId !== currentSectionId) {
+        currentSectionId = activeId;
         let activeNavLink = null;
         navLinks.forEach((link) => {
             const isActive = link.getAttribute("href") === `#${activeId}`;
@@ -287,6 +297,7 @@ function setupStacks() {
             zone.style.height = "";
             children.forEach((child) => {
                 child.style.transform = "";
+                child.__stackTransform = "";
                 child.style.zIndex = "";
                 child.classList.remove("is-front");
                 if ("inert" in HTMLElement.prototype) child.inert = false;
@@ -338,6 +349,7 @@ function setupStacks() {
             child.style.zIndex = String(n - index);
             child.style.marginTop = "";
             child.style.transform = "";
+            child.__stackTransform = "";
             child.classList.toggle("is-front", index === 0);
         });
 
@@ -363,7 +375,7 @@ function setupStacks() {
     });
 
     buildStackGeometry();
-    applyStackFrames();
+    applyStackFrames(true);
 }
 
 function buildStackGeometry() {
@@ -390,12 +402,17 @@ function buildStackGeometry() {
     });
 }
 
-function applyStackFrames() {
+function applyStackFrames(force) {
     if (!stackFrames.length) return;
     const y = window.scrollY;
+    /* One viewport of slack on either side of a deck's run: anything further
+       away cannot be seen, and touching 25 offscreen cards every scroll tick
+       is what made real wheel scrolling drop frames. */
+    const slack = window.innerHeight;
 
     stackFrames.forEach((frame) => {
         const deck = frame.deck;
+        if (!force && (y < frame.pinStart - slack || y > frame.release + slack)) return;
 
         /* Pin: the stage locks at the pin line from pinStart, holds while
            the deck is dealt, then stops translating - from there it scrolls
@@ -404,7 +421,7 @@ function applyStackFrames() {
             Math.max(y - frame.pinStart, 0),
             Math.max(frame.runway, 0)
         );
-        deck.stage.style.transform = `translate3d(0, ${pin.toFixed(1)}px, 0)`;
+        writeTransform(deck.stage, `translate3d(0, ${pin.toFixed(1)}px, 0)`);
 
         /* Continuous deal progress: 0 = full deck, n-1 = last card is the
            front card. Before the lead-in the deck simply rests; each whole
@@ -431,9 +448,19 @@ function applyStackFrames() {
             const dealt = Math.min(Math.max(p - index, 0), 1);
             const scale = Math.max(0.84, 1 - depth * deck.scaleStep) * deck.fit;
             const offset = depth * deck.drop - dealt * deck.travel;
-            child.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
+            writeTransform(child, `translate3d(0, ${offset.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`);
         });
     });
+}
+
+/* Style writes are the expensive part of the frame, so only touch an
+   element when its transform actually changes: a resting deck or a
+   fully dealt card would otherwise invalidate style every frame for a
+   string that is already in place. */
+function writeTransform(el, value) {
+    if (el.__stackTransform === value) return;
+    el.__stackTransform = value;
+    el.style.transform = value;
 }
 
 /* Content above the stacks (lazy images finishing, font swap) can shift
@@ -449,7 +476,7 @@ if ("ResizeObserver" in window) {
         window.requestAnimationFrame(() => {
             stackRebuildQueued = false;
             buildStackGeometry();
-            applyStackFrames();
+            applyStackFrames(true);
         });
     });
     bodySizeObserver.observe(document.body);
@@ -509,12 +536,28 @@ function pinPill(link) {
 }
 
 if (navPill && navbar) {
+    /* pointerover bubbles, so sweeping a link's own text re-fires it several
+       times per link. Each call used to force a reflow and restart the jelly
+       keyframe, which is why the bubble looked twitchy instead of liquid.
+       Place the pill once per link entered. */
+    let previewLink = null;
+    let previewAnchor = null;
     navbar.addEventListener("pointerover", (event) => {
         const link = event.target.closest("a");
         if (!link) return;
-        placePill(link.classList.contains("nav-resume-btn") ? pillAnchorLink : link, { liquid: true });
+        const target = link.classList.contains("nav-resume-btn") ? pillAnchorLink : link;
+        // The anchor can move underneath a resting pointer (scroll changes
+        // the section), so re-place when that happened too.
+        if (target === previewLink && previewAnchor === pillAnchorLink) return;
+        previewLink = target;
+        previewAnchor = pillAnchorLink;
+        placePill(target, { liquid: true });
     });
-    navbar.addEventListener("pointerleave", () => placePill(pillAnchorLink, { liquid: true }));
+    navbar.addEventListener("pointerleave", () => {
+        previewLink = null;
+        previewAnchor = null;
+        placePill(pillAnchorLink, { liquid: true });
+    });
     navbar.addEventListener("focusin", (event) => {
         const link = event.target.closest("a");
         if (link && !link.classList.contains("nav-resume-btn")) placePill(link, { liquid: true });

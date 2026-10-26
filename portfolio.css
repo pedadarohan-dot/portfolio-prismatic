@@ -46,12 +46,26 @@
     --page-gutter: clamp(2rem, 5vw, 8rem);
     --section-space: clamp(8rem, 12vw, 13rem);
 
-    /* Motion */
-    --transition-fast: 180ms;
-    --transition-normal: 320ms;
-    --transition-slow: 600ms;
-    --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+    /* Motion - one duration scale, three curves, used everywhere.
+       press:  immediate tactile feedback on :active
+       micro:  colour / border / opacity state flips - felt, not watched
+       base:   small spatial moves - buttons, chips, icon rotations
+       move:   larger travel - card lifts, image scales
+       enter:  scroll reveals - the site's signature slow glide
+       fade:   the opacity half of a reveal (outlasts the eye's read of
+               the movement, so travel leads and the fade settles behind it)
+       Curves: spatial moves use --ease-enter (quick launch, long soft
+       landing); colour/opacity uses --ease-standard (quiet, symmetric);
+       exits use --ease-exit so things leave without lingering. */
+    --dur-press: 110ms;
+    --dur-micro: 200ms;
+    --dur-base: 320ms;
+    --dur-move: 520ms;
+    --dur-enter: 780ms;
+    --dur-fade: 520ms;
     --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
     /* Apple-grade glide for the nav pill: a measured launch, then a long
        soft landing with zero positional overshoot. Slower and heavier than
        a UI snap on purpose - the bubble should look like it has mass.
@@ -377,11 +391,11 @@ section {
     line-height: 1.2;
     border: 1px solid transparent;
     transition:
-        transform var(--transition-fast) var(--ease-out),
-        box-shadow var(--transition-normal) var(--ease-standard),
-        background-color var(--transition-fast) var(--ease-standard),
-        border-color var(--transition-fast) var(--ease-standard),
-        color var(--transition-fast) var(--ease-standard);
+        transform var(--dur-base) var(--ease-enter),
+        box-shadow var(--dur-base) var(--ease-enter),
+        background-color var(--dur-micro) var(--ease-standard),
+        border-color var(--dur-micro) var(--ease-standard),
+        color var(--dur-micro) var(--ease-standard);
 }
 
 .btn:active {
@@ -478,10 +492,10 @@ section {
     border-radius: var(--radius-large);
     z-index: 1000;
     transition:
-        padding var(--transition-normal) var(--ease-standard),
-        box-shadow var(--transition-normal) var(--ease-standard),
-        background-color var(--transition-normal) var(--ease-standard),
-        border-color var(--transition-normal) var(--ease-standard);
+        padding var(--dur-micro) var(--ease-standard),
+        box-shadow var(--dur-base) var(--ease-standard),
+        background-color var(--dur-base) var(--ease-standard),
+        border-color var(--dur-base) var(--ease-standard);
 }
 
 .header.sticky {
@@ -506,7 +520,7 @@ section {
     letter-spacing: -0.03em;
     color: var(--color-text-primary);
     white-space: nowrap;
-    transition: opacity var(--transition-fast) ease;
+    transition: opacity var(--dur-micro) var(--ease-standard);
 }
 
 .logo span {
@@ -531,8 +545,8 @@ section {
     padding: 0.8rem 1.2rem;
     border-radius: var(--radius-pill);
     transition:
-        color var(--transition-fast) ease,
-        background-color var(--transition-fast) ease;
+        color var(--dur-micro) var(--ease-standard),
+        background-color var(--dur-micro) var(--ease-standard);
 }
 
 .navbar a:hover {
@@ -554,11 +568,11 @@ section {
     background: rgb(64 224 208 / 7%);
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
     transition:
-        background-color var(--transition-fast) ease,
-        color var(--transition-fast) ease,
-        border-color var(--transition-fast) ease,
-        transform var(--transition-fast) var(--ease-out),
-        box-shadow var(--transition-normal) ease !important;
+        background-color var(--dur-micro) var(--ease-standard),
+        color var(--dur-micro) var(--ease-standard),
+        border-color var(--dur-micro) var(--ease-standard),
+        transform var(--dur-base) var(--ease-enter),
+        box-shadow var(--dur-base) var(--ease-enter) !important;
 }
 
 .nav-resume-btn:hover {
@@ -584,10 +598,10 @@ section {
     border-radius: var(--radius-small);
     background: rgb(255 255 255 / 5%);
     transition:
-        color var(--transition-fast) ease,
-        border-color var(--transition-fast) ease,
-        background-color var(--transition-fast) ease,
-        transform 300ms var(--ease-out);
+        color var(--dur-micro) var(--ease-standard),
+        border-color var(--dur-micro) var(--ease-standard),
+        background-color var(--dur-micro) var(--ease-standard),
+        transform var(--dur-base) var(--ease-enter);
 }
 
 /* The glyph swaps instantly; the rotation makes it read as a morph. */
@@ -636,7 +650,7 @@ section {
     border-radius: 50%;
     background: var(--color-accent-bright);
     box-shadow: 0 0 0 0.4rem rgb(64 224 208 / 14%);
-    animation: badgePulse 2.1s infinite ease-in-out;
+    animation: badgePulse 3.2s infinite ease-in-out;
     flex-shrink: 0;
 }
 
@@ -698,7 +712,7 @@ section {
     width: 2px;
     height: 84%;
     background: var(--color-accent-bright);
-    animation: cursor 0.7s steps(1) infinite;
+    animation: cursor 1.05s steps(1) infinite;
 }
 
 @keyframes cursor {
@@ -746,11 +760,11 @@ section {
     background: rgb(255 255 255 / 3%);
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
     transition:
-        color var(--transition-fast) ease,
-        border-color var(--transition-fast) ease,
-        background-color var(--transition-fast) ease,
-        transform var(--transition-fast) var(--ease-out),
-        box-shadow var(--transition-normal) ease;
+        color var(--dur-micro) var(--ease-standard),
+        border-color var(--dur-micro) var(--ease-standard),
+        background-color var(--dur-micro) var(--ease-standard),
+        transform var(--dur-base) var(--ease-enter),
+        box-shadow var(--dur-base) var(--ease-enter);
 }
 
 .social-icon a:hover {
@@ -851,10 +865,10 @@ section {
     -webkit-backdrop-filter: blur(12px) saturate(140%);
     backdrop-filter: blur(12px) saturate(140%);
     transition:
-        border-color var(--transition-normal) ease,
-        transform var(--transition-normal) var(--ease-out),
-        box-shadow var(--transition-normal) ease,
-        background-color var(--transition-normal) ease;
+        border-color var(--dur-base) var(--ease-enter),
+        transform var(--dur-base) var(--ease-enter),
+        box-shadow var(--dur-base) var(--ease-enter),
+        background-color var(--dur-base) var(--ease-enter);
 }
 
 .service-box:hover {
@@ -923,9 +937,9 @@ section {
     border: 1px solid var(--color-border);
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
     transition:
-        border-color var(--transition-normal) ease,
-        transform var(--transition-normal) var(--ease-out),
-        box-shadow var(--transition-normal) ease;
+        border-color var(--dur-base) var(--ease-enter),
+        transform var(--dur-base) var(--ease-enter),
+        box-shadow var(--dur-base) var(--ease-enter);
 }
 
 .skills .bar:hover {
@@ -973,7 +987,7 @@ section {
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
     -webkit-backdrop-filter: blur(12px) saturate(140%);
     backdrop-filter: blur(12px) saturate(140%);
-    transition: border-color var(--transition-normal) ease;
+    transition: border-color var(--dur-base) var(--ease-enter);
 }
 
 .skills-category:hover {
@@ -1012,9 +1026,9 @@ section {
     border: 1px solid var(--color-border);
     background: rgb(255 255 255 / 3%);
     transition:
-        color var(--transition-fast) ease,
-        border-color var(--transition-fast) ease,
-        background-color var(--transition-fast) ease;
+        color var(--dur-micro) var(--ease-standard),
+        border-color var(--dur-micro) var(--ease-standard),
+        background-color var(--dur-micro) var(--ease-standard);
 }
 
 .skill-tag:hover {
@@ -1096,9 +1110,9 @@ section {
     -webkit-backdrop-filter: blur(12px) saturate(140%);
     backdrop-filter: blur(12px) saturate(140%);
     transition:
-        border-color var(--transition-normal) ease,
-        transform var(--transition-normal) var(--ease-out),
-        box-shadow var(--transition-normal) ease;
+        border-color var(--dur-base) var(--ease-enter),
+        transform var(--dur-base) var(--ease-enter),
+        box-shadow var(--dur-base) var(--ease-enter);
 }
 
 .education .content:hover {
@@ -1193,7 +1207,7 @@ section {
         0 0 90px 22px rgb(13 115 119 / 30%),
         0 0 160px 48px rgb(13 115 119 / 18%);
     filter: blur(10px);
-    animation: certHalo 5.5s var(--ease-standard) infinite alternate;
+    animation: certHalo 7s var(--ease-standard) infinite alternate;
     pointer-events: none;
     z-index: 0;
 }
@@ -1224,8 +1238,8 @@ section {
     box-shadow:
         inset 0 1px 0 rgb(255 255 255 / 12%),
         0 26px 60px rgb(0 0 0 / 38%);
-    transition: transform var(--transition-normal) var(--ease-out),
-        box-shadow var(--transition-normal) ease;
+    transition: transform var(--dur-base) var(--ease-enter),
+        box-shadow var(--dur-base) var(--ease-enter);
 }
 
 .certificate-stage:hover .certificate-shell {
@@ -1306,9 +1320,9 @@ section {
     -webkit-backdrop-filter: blur(12px) saturate(140%);
     backdrop-filter: blur(12px) saturate(140%);
     transition:
-        transform var(--transition-normal) var(--ease-out),
-        border-color var(--transition-normal) ease,
-        box-shadow var(--transition-normal) ease;
+        transform var(--dur-base) var(--ease-enter),
+        border-color var(--dur-base) var(--ease-enter),
+        box-shadow var(--dur-base) var(--ease-enter);
 }
 
 .project-card:hover {
@@ -1390,7 +1404,7 @@ section {
     border-radius: var(--radius-small);
     border: 1px solid rgb(255 255 255 / 10%);
     box-shadow: 0 14px 34px rgb(0 0 0 / 36%);
-    transition: transform var(--transition-slow) var(--ease-out);
+    transition: transform var(--dur-move) var(--ease-enter);
 }
 
 .project-card:hover .project-media img {
@@ -1535,15 +1549,15 @@ section {
     color: var(--color-accent-bright);
     border-bottom: 1px solid rgb(64 224 208 / 32%);
     transition:
-        color var(--transition-fast) ease,
-        border-color var(--transition-fast) ease,
-        gap var(--transition-fast) ease;
+        color var(--dur-micro) var(--ease-standard),
+        border-color var(--dur-micro) var(--ease-standard),
+        transform var(--dur-base) var(--ease-enter);
 }
 
 .project-links a:hover {
     color: #8ff0e4;
     border-color: var(--color-accent-bright);
-    gap: 1rem;
+    transform: translateX(4px);
 }
 
 .project-note {
@@ -1570,7 +1584,7 @@ section {
     color: var(--color-accent-bright);
     border-bottom: 1px solid rgb(64 224 208 / 32%);
     padding-bottom: 0.2rem;
-    transition: border-color var(--transition-fast) ease;
+    transition: border-color var(--dur-micro) var(--ease-standard);
 }
 
 .projects-footer a:hover {
@@ -1634,9 +1648,9 @@ section {
     -webkit-backdrop-filter: blur(8px) saturate(130%);
     backdrop-filter: blur(8px) saturate(130%);
     transition:
-        border-color var(--transition-fast) ease,
-        box-shadow var(--transition-fast) ease,
-        background-color var(--transition-fast) ease;
+        border-color var(--dur-micro) var(--ease-standard),
+        box-shadow var(--dur-micro) var(--ease-standard),
+        background-color var(--dur-micro) var(--ease-standard);
 }
 
 .contact form .input-box input::placeholder,
@@ -1717,10 +1731,10 @@ section {
     border-radius: var(--radius-small);
     background: rgb(255 255 255 / 3%);
     transition:
-        color var(--transition-fast) ease,
-        border-color var(--transition-fast) ease,
-        background-color var(--transition-fast) ease,
-        transform var(--transition-fast) var(--ease-out);
+        color var(--dur-micro) var(--ease-standard),
+        border-color var(--dur-micro) var(--ease-standard),
+        background-color var(--dur-micro) var(--ease-standard),
+        transform var(--dur-base) var(--ease-enter);
 }
 
 .footer .social a:hover {
@@ -1743,7 +1757,7 @@ section {
     padding: 0.6rem 1rem;
     color: var(--color-text-secondary);
     border-radius: var(--radius-pill);
-    transition: color var(--transition-fast) ease, background-color var(--transition-fast) ease;
+    transition: color var(--dur-micro) var(--ease-standard), background-color var(--dur-micro) var(--ease-standard);
 }
 
 .footer ul li a:hover {
@@ -1763,8 +1777,9 @@ section {
    -------------------------------------------------------------------------- */
 /* Reveal states are added by JS only — content is visible without JS.
    The travel itself is the transition: sections sweep up ~70-75px on a glide
-   curve, contents follow 120ms behind in a staggered cascade. Opacity lands
-   fast so the movement — not a fade — is what you see.
+   curve, contents follow 140ms behind in a staggered cascade. The fade
+   trails the travel instead of leading it: motion is what you see, the
+   opacity settles quietly underneath.
    Travel uses `translate` (not `transform`) so hover lifts and press feedback
    compose on top of an in-flight or finished reveal instead of fighting it
    in the cascade. End-state rules are declared last to win over start rules. */
@@ -1777,15 +1792,15 @@ main section.scroll-reveal,
 [data-reveal].reveal-pending {
     translate: 0 2.5rem;
     transition:
-        opacity 280ms var(--ease-out),
-        translate 740ms var(--ease-standard);
-    transition-delay: calc(120ms + var(--reveal-delay, 0ms));
+        opacity var(--dur-fade) var(--ease-standard),
+        translate var(--dur-enter) var(--ease-enter);
+    transition-delay: calc(140ms + var(--reveal-delay, 0ms));
 }
 
 main section.scroll-reveal {
     transition:
-        opacity 300ms var(--ease-out),
-        translate 800ms var(--ease-standard);
+        opacity var(--dur-fade) var(--ease-standard),
+        translate var(--dur-enter) var(--ease-enter);
 }
 
 main section.scroll-reveal.is-visible,
@@ -1801,11 +1816,11 @@ main section.scroll-reveal.is-visible,
 .navbar a:active,
 .social-icon a:active {
     transition:
-        transform 100ms var(--ease-out),
-        color 100ms ease,
-        background-color 100ms ease,
-        border-color 100ms ease,
-        box-shadow 100ms ease;
+        transform var(--dur-press) var(--ease-enter),
+        color var(--dur-press) var(--ease-standard),
+        background-color var(--dur-press) var(--ease-standard),
+        border-color var(--dur-press) var(--ease-standard),
+        box-shadow var(--dur-press) var(--ease-standard);
 }
 
 .service-box:active,
@@ -1823,7 +1838,7 @@ main section.scroll-reveal.is-visible,
 }
 
 .hero-reveal {
-    animation: heroRise 700ms var(--ease-out) both;
+    animation: heroRise var(--dur-enter) var(--ease-enter) both;
     animation-delay: var(--hero-delay, 0ms);
 }
 
@@ -1899,9 +1914,9 @@ main section.scroll-reveal.is-visible,
         pointer-events: none;
         transform: translateY(-0.8rem);
         transition:
-            opacity var(--transition-normal) var(--ease-standard),
-            transform var(--transition-normal) var(--ease-standard),
-            visibility var(--transition-normal);
+            opacity var(--dur-base) var(--ease-standard),
+            transform var(--dur-base) var(--ease-standard),
+            visibility var(--dur-base);
     }
 
     .navbar.active {
@@ -2082,9 +2097,9 @@ main section.scroll-reveal.is-visible,
    -------------------------------------------------------------------------- */
 .navbar a {
     transition:
-        color var(--transition-fast) ease,
-        background-color var(--transition-fast) ease,
-        box-shadow var(--transition-normal) var(--ease-standard);
+        color var(--dur-micro) var(--ease-standard),
+        background-color var(--dur-micro) var(--ease-standard),
+        box-shadow var(--dur-base) var(--ease-standard);
 }
 
 .navbar a:hover {
@@ -2135,11 +2150,11 @@ main section.scroll-reveal.is-visible,
 .social-icon a,
 .footer .social a {
     transition:
-        color var(--transition-fast) ease,
-        background-color var(--transition-fast) ease,
-        border-color var(--transition-fast) ease,
-        transform var(--transition-normal) var(--ease-out),
-        box-shadow var(--transition-normal) var(--ease-standard);
+        color var(--dur-micro) var(--ease-standard),
+        background-color var(--dur-micro) var(--ease-standard),
+        border-color var(--dur-micro) var(--ease-standard),
+        transform var(--dur-base) var(--ease-enter),
+        box-shadow var(--dur-base) var(--ease-standard);
 }
 
 .social-icon a:hover,
@@ -2260,7 +2275,7 @@ main section.scroll-reveal.is-visible,
         transform var(--pill-travel-time) var(--ease-liquid),
         width var(--pill-travel-time) var(--ease-liquid),
         height var(--pill-travel-time) var(--ease-liquid),
-        opacity 0.4s ease;
+        opacity var(--dur-base) var(--ease-standard);
     will-change: transform, width;
 }
 

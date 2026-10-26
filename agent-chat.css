@@ -39,8 +39,8 @@
         inset 0 1px 0 rgb(255 255 255 / 45%),
         0 10px 30px rgb(0 0 0 / 40%),
         0 6px 24px rgb(13 115 119 / 35%);
-    transition: transform 200ms cubic-bezier(0.22, 0.61, 0.36, 1),
-        box-shadow 320ms ease;
+    transition: transform var(--dur-base) var(--ease-enter),
+        box-shadow var(--dur-base) var(--ease-standard);
 }
 
 .agent-chat-toggle:hover {
@@ -60,7 +60,7 @@
     width: 26px;
     height: 26px;
     fill: currentColor;
-    transition: transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition: transform var(--dur-base) var(--ease-enter);
 }
 
 .agent-chat-toggle.active svg {
@@ -73,7 +73,7 @@
     height: 100%;
     border-radius: 50%;
     border: 1px solid rgb(64 224 208 / 45%);
-    animation: chatPulse 2.6s ease-out infinite;
+    animation: chatPulse 3.4s ease-out infinite;
     pointer-events: none;
 }
 
@@ -108,7 +108,7 @@
     border: 1px solid rgb(255 255 255 / 14%);
     border-radius: var(--chat-radius);
     z-index: 9999;
-    display: none;
+    display: flex;
     flex-direction: column;
     overflow: hidden;
     -webkit-backdrop-filter: blur(18px) saturate(150%);
@@ -121,9 +121,17 @@
         inset 0 -10px 24px rgb(64 224 208 / 5%),
         0 24px 60px rgb(0 0 0 / 55%);
     font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    visibility: hidden;
     opacity: 0;
+    pointer-events: none;
     transform: translateY(16px) scale(0.97);
-    transition: opacity 280ms ease, transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    /* Opens slow and soft (it is arriving), closes quicker (it is done).
+       visibility flips after the close movement so the fade is visible,
+       then drops the widget out of the tab order and the a11y tree. */
+    transition:
+        opacity 220ms var(--ease-exit),
+        transform 260ms var(--ease-exit),
+        visibility 0s linear 260ms;
 }
 
 @supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
@@ -133,9 +141,14 @@
 }
 
 .agent-chat-window.open {
-    display: flex;
+    visibility: visible;
     opacity: 1;
+    pointer-events: auto;
     transform: translateY(0) scale(1);
+    transition:
+        opacity 380ms var(--ease-enter),
+        transform 380ms var(--ease-enter),
+        visibility 0s;
 }
 
 /* Chat Header */
@@ -198,7 +211,7 @@
     border-radius: 50%;
     background: var(--chat-accent);
     display: inline-block;
-    animation: statusPulse 2s ease-in-out infinite;
+    animation: statusPulse 3s ease-in-out infinite;
 }
 
 @keyframes statusPulse {
@@ -224,7 +237,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+    transition: background-color var(--dur-micro) var(--ease-standard), color var(--dur-micro) var(--ease-standard), border-color var(--dur-micro) var(--ease-standard);
     font-size: 18px;
     line-height: 1;
     flex-shrink: 0;
@@ -273,7 +286,7 @@
     font-size: 13.5px;
     line-height: 1.55;
     word-wrap: break-word;
-    animation: msgSlideIn 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation: msgSlideIn 340ms var(--ease-enter);
 }
 
 @keyframes msgSlideIn {
@@ -366,8 +379,8 @@
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease,
-        transform 180ms ease;
+    transition: background-color var(--dur-micro) var(--ease-standard), color var(--dur-micro) var(--ease-standard), border-color var(--dur-micro) var(--ease-standard),
+        transform var(--dur-base) var(--ease-enter);
     border: none;
 }
 
@@ -406,7 +419,7 @@
     height: 7px;
     background: var(--chat-accent);
     border-radius: 50%;
-    animation: typingBounce 1.4s ease-in-out infinite;
+    animation: typingBounce 1.5s ease-in-out infinite;
 }
 
 .agent-typing .dot:nth-child(2) {
@@ -449,8 +462,8 @@
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease,
-        transform 180ms ease;
+    transition: background-color var(--dur-micro) var(--ease-standard), border-color var(--dur-micro) var(--ease-standard), color var(--dur-micro) var(--ease-standard),
+        transform var(--dur-base) var(--ease-enter);
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -491,7 +504,7 @@
     min-height: 42px;
     max-height: 100px;
     line-height: 1.5;
-    transition: border-color 180ms ease, box-shadow 180ms ease;
+    transition: border-color var(--dur-micro) var(--ease-standard), box-shadow var(--dur-micro) var(--ease-standard);
 }
 
 .agent-chat-input-area textarea::placeholder {
@@ -513,7 +526,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+    transition: transform var(--dur-base) var(--ease-enter), box-shadow var(--dur-micro) var(--ease-standard), opacity var(--dur-micro) var(--ease-standard);
     flex-shrink: 0;
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 40%);
 }
